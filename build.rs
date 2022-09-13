@@ -5,20 +5,42 @@ use std::{
 };
 
 fn main() {
-    // read model yaml
-    let models: Mapping = serde_yaml::from_str(&read_to_string("./model.yaml").unwrap()).unwrap();
+    init();
+}
 
-    // make body
-    let mut body = "use serde::{Deserialize, Serialize};macro_rules! make_model {($fn_name:ident, $($fd_name: ident: $type: ty),*) => {#[derive(Serialize, Deserialize, Debug)]pub struct $fn_name {$(pub $fd_name: $type),* }}}".to_string();
+fn init() {
+    let models: Mapping = serde_yaml::from_str(&read_to_string("./model.yaml").unwrap()).unwrap();
+    let tmp = "#[macro_use]mod util;mod handler;pub fn config(cfg: &mut actix_web::web::ServiceConfig){cfg.service(actix_web::web::resource(\"/\").route(actix_web::web::get().to(|| actix_web::HttpResponse::Ok()))){routes};}{structs}".to_string();
+    let mut routes = "".to_string();
+    let mut structs = "".to_string();
+
     for model in models.iter() {
+        let struct_name = to_titlecase(model.0.as_str().unwrap());
+
         for prop in model.1.as_mapping().unwrap().iter() {
             match prop.0.as_str() {
                 Some("fields") => {
-                    body.push_str(
+                    structs.push_str(
                         format!(
-                            "make_model!({}, {});",
-                            to_titlecase(model.0.as_str().unwrap()),
+                            "make_model![{}, {}];",
+                            struct_name,
                             parse_fields(prop.1.as_mapping().unwrap())
+                        )
+                        .as_str(),
+                    );
+                }
+                Some("methods") => {
+                    let methods = prop
+                        .1
+                        .as_sequence()
+                        .unwrap()
+                        .iter()
+                        .map(|x| serde_yaml::from_value::<String>(x.to_owned()).unwrap())
+                        .collect::<Vec<String>>();
+                    routes.push_str(
+                        format!(
+                            ".service(make_router![{}, {:?}.to_vec()])",
+                            struct_name, methods
                         )
                         .as_str(),
                     );
@@ -28,10 +50,13 @@ fn main() {
         }
     }
 
-    // write model rs
-    File::create("./src/model.rs")
+    File::create("./src/lib/mod.rs")
         .unwrap()
-        .write(body.as_bytes())
+        .write(
+            tmp.replace("{routes}", &routes)
+                .replace("{structs}", &structs)
+                .as_bytes(),
+        )
         .unwrap();
 }
 
@@ -55,17 +80,22 @@ fn parse_fields(fields: &Mapping) -> String {
             )
             .as_str(),
         );
+
+        println!("{:?}", result);
     }
 
     result.pop();
     result
 }
 
-fn parse_type(field_type: &str) -> &str {
+fn parse_type(field_type: &str) -> String {
+    eprintln!("field: {}", field_type);
     match field_type.to_lowercase().as_str() {
-        "int" => "u32",
-        "long" => "u64",
-        "string" => "String",
-        _ => "",
+        "int" => "u32".to_string(),
+        "long" => "u64".to_string(),
+        "string" => "String".to_string(),
+        "bool" => "bool".to_string(),
+        f if f.ends_with("[]") => format!("Vec<{}>", to_titlecase(f.strip_suffix("[]").unwrap())),
+        _ => "".to_string(),
     }
 }

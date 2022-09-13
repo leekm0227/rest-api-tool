@@ -3,14 +3,12 @@ name = "dyn-web"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-name = "model"
-path = "src/model.rs"
-
 [build-dependencies]
-serde = { version = "1.0", features = ["derive"] }
+regex = "1"
+serde = "1"
 serde_yaml = "0.9"
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
+serde = "1"
 actix-web = "4"
+mongodb = {version = "2.1.0", default-features = false, features = ["sync"]}
