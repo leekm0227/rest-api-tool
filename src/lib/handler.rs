@@ -6,12 +6,12 @@ use mongodb::bson::doc;
 use serde::{de::DeserializeOwned, Serialize};
 use std::any::type_name;
 
-pub async fn get_list<T>(db: Data<mongodb::sync::Database>) -> HttpResponse
+pub trait Mongo<T>
 where
-    T: DeserializeOwned + Unpin + Send + Sync + Serialize,
+    T: DeserializeOwned + Unpin + Send + Sync,
 {
-    let data = db
-        .collection::<T>(
+    fn list(db: Data<mongodb::sync::Database>) -> Vec<T> {
+        db.collection::<T>(
             type_name::<T>()
                 .to_uppercase()
                 .as_str()
@@ -22,16 +22,11 @@ where
         .find(None, None)
         .unwrap()
         .map(|doc| doc.unwrap())
-        .collect::<Vec<_>>();
-    HttpResponse::Ok().json(data)
-}
+        .collect::<Vec<T>>()
+    }
 
-pub async fn get<T>(db: Data<mongodb::sync::Database>, id: Path<u32>) -> HttpResponse
-where
-    T: DeserializeOwned + Unpin + Send + Sync + Serialize,
-{
-    let data = db
-        .collection::<T>(
+    fn get(db: Data<mongodb::sync::Database>, id: u32) -> T {
+        db.collection::<T>(
             type_name::<T>()
                 .to_uppercase()
                 .as_str()
@@ -39,9 +34,24 @@ where
                 .last()
                 .unwrap(),
         )
-        .find_one(doc! {"idx":id.into_inner()}, None)
-        .unwrap();
-    HttpResponse::Ok().json(data)
+        .find_one(doc! {"idx":id}, None)
+        .unwrap()
+        .unwrap()
+    }
+}
+
+pub async fn get_list<T>(db: Data<mongodb::sync::Database>) -> HttpResponse
+where
+    T: DeserializeOwned + Unpin + Send + Sync + Serialize + Mongo<T>,
+{
+    HttpResponse::Ok().json(T::list(db))
+}
+
+pub async fn get<T>(db: Data<mongodb::sync::Database>, id: Path<u32>) -> HttpResponse
+where
+    T: DeserializeOwned + Unpin + Send + Sync + Serialize + Mongo<T>,
+{
+    HttpResponse::Ok().json(T::get(db, id.into_inner()))
 }
 
 pub async fn post<T>(db: Data<mongodb::sync::Database>, document: Json<T>) -> HttpResponse

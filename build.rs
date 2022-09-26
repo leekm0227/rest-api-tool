@@ -95,7 +95,7 @@ fn parse_type(field_type: &str) -> String {
         "long" => "u64".to_string(),
         "string" => "String".to_string(),
         "bool" => "bool".to_string(),
-        f if f.ends_with("[]") => format!("Vec<{}>", to_titlecase(f.strip_suffix("[]").unwrap())),
+        f if f.ends_with("[]") => format!("Option<Vec<{}>>", to_titlecase(f.strip_suffix("[]").unwrap())),
         _ => "".to_string(),
     }
 }

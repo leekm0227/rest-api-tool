@@ -5,11 +5,11 @@ macro_rules! make_router {
             match method {
                 "GET" => {
                     scope = scope
-                        .route("/{id}", actix_web::web::get().to(handler::get::<$struct>))
-                        .route("", actix_web::web::get().to(handler::get_list::<$struct>));
+                    .route("/{id}", actix_web::web::get().to(handler::get::<$struct>))
+                    .route("", actix_web::web::get().to(handler::get_list::<$struct>));
                 }
                 "POST" => {
-                    scope = scope.route("", actix_web::web::post().to(handler::post::<$struct>));
+                    // scope = scope.route("", actix_web::web::post().to(handler::post::<$struct>));
                 }
                 "PATCH" => {
                     scope =
@@ -30,10 +30,12 @@ macro_rules! make_router {
 }
 
 macro_rules! make_model {
-    ($fn_name:ident, $($fd_name: ident: $type: ty),*) => {
+    ($struct_name:ident, $($fd_name: ident: $type: ty),*) => {
         #[derive(serde::Serialize, serde::Deserialize, Debug)]
-        pub struct $fn_name {
+        pub struct $struct_name {
             $(pub $fd_name: $type),*
         }
+
+        impl handler::Mongo<$struct_name> for $struct_name{}
     }
 }
