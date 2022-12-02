@@ -1,28 +1,22 @@
 comment:
   fields:
-    idx: int
     content: string
-    ct: long
-    ut: long
     user_idx: int
     user_name: string
   methods:
     - GET
     - POST
-    - PUT
+    - PATCH
 
 article:
   fields:
-    idx: int
     title: string
     content: string
     comments: comment[]
-    ct: long
-    ut: long
     user_idx: int
     user_name: string
   methods:
     - GET
     - POST
-    - PUT
+    - PATCH
     - DELETE

@@ -10,9 +10,9 @@ fn main() {
 
 fn init() {
     let models: Mapping = serde_yaml::from_str(&read_to_string("./model.yaml").unwrap()).unwrap();
-    let tmp = "#[macro_use]mod util;mod handler;pub fn config(cfg: &mut actix_web::web::ServiceConfig){cfg.service(actix_web::web::resource(\"/\").route(actix_web::web::get().to(|| actix_web::HttpResponse::Ok()))){routes};}{structs}".to_string();
-    let mut routes = "".to_string();
-    let mut structs = "".to_string();
+    let tmp = "#[macro_use]mod macros;mod utils;mod handlers;pub fn config(cfg: &mut actix_web::web::ServiceConfig){cfg.service(actix_web::web::resource(\"/\").route(actix_web::web::get().to(|| actix_web::HttpResponse::Ok()))){routes};}{structs}".to_owned();
+    let mut routes = "".to_owned();
+    let mut structs = "".to_owned();
 
     for model in models.iter() {
         let struct_name = to_titlecase(model.0.as_str().unwrap());
@@ -91,11 +91,11 @@ fn parse_fields(fields: &Mapping) -> String {
 fn parse_type(field_type: &str) -> String {
     eprintln!("field: {}", field_type);
     match field_type.to_lowercase().as_str() {
-        "int" => "u32".to_string(),
-        "long" => "u64".to_string(),
-        "string" => "String".to_string(),
-        "bool" => "bool".to_string(),
-        f if f.ends_with("[]") => format!("Option<Vec<{}>>", to_titlecase(f.strip_suffix("[]").unwrap())),
-        _ => "".to_string(),
+        "int" => "u32".to_owned(),
+        "long" => "u64".to_owned(),
+        "string" => "String".to_owned(),
+        "bool" => "bool".to_owned(),
+        f if f.ends_with("[]") => format!("Vec<{}>", to_titlecase(f.strip_suffix("[]").unwrap())),
+        _ => "".to_owned(),
     }
 }
