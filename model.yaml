@@ -1,22 +1,30 @@
 comment:
   fields:
-    content: string
-    user_idx: int
-    user_name: string
-  methods:
-    - GET
-    - POST
-    - PATCH
+    content: str
+    memos: memo[]
+    todos: todo[]
+    user_idx: num
+    user_name: str
+  methods: c,r,u
 
 article:
   fields:
-    title: string
-    content: string
+    title: str
+    content: str
     comments: comment[]
-    user_idx: int
-    user_name: string
-  methods:
-    - GET
-    - POST
-    - PATCH
-    - DELETE
+    memos: memo[]
+    todos: todo[]
+    user_idx: num
+    user_name: str
+  methods: c,r,u,d
+
+memo:
+  fields:
+    content: str
+
+todo:
+  fields:
+    is_complete: bool
+    content: str
+    memos: memo[]
+  methods: c,r,u,d

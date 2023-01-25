@@ -1,4 +1,4 @@
-mod lib;
+mod api;
 use actix_web::{web::Data, App, HttpServer};
 use mongodb::sync::Client;
 
@@ -13,7 +13,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(Data::new(db.clone()))
-            .configure(lib::config)
+            .configure(api::config)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
