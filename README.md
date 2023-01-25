@@ -19,10 +19,16 @@ todo:
   
   endpoints
   ```
+  [GET]
   /todo
   /todo/{todo_id}
   /todo/{todo_id}/memo
-  /todo/{todo_id}/memo/{memo_id}
   
-  methods: GET, POST, PATCH, DELETE
+  [POST]
+  /todo
+  /todo/{todo_id}/memo
+  
+  [PATCH, DELETE]
+  /todo/{todo_id}
+  /todo/{todo_id}/memo/{memo_id}
   ```
