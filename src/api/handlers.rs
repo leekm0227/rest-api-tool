@@ -1,4 +1,4 @@
-use super::utils::{get_query, get_timestamp, Mongo, str_to_oid};
+use super::utils::{get_query, get_timestamp, str_to_oid, Mongo};
 use actix_web::{
     web::{Data, Json},
     HttpRequest, HttpResponse,
@@ -8,31 +8,26 @@ use mongodb::bson::{self, doc};
 use serde::{de::DeserializeOwned, Serialize};
 use std::fmt::Debug;
 
-pub async fn list<T>(req: HttpRequest, db: Data<mongodb::sync::Database>) -> HttpResponse
+pub async fn list<T>(req: HttpRequest, db: Data<mongodb::Database>) -> HttpResponse
 where
     T: DeserializeOwned + Unpin + Send + Sync + Serialize + Mongo<T> + Debug,
 {
     let query = get_query(req);
-    HttpResponse::Ok().json(T::find_all(db, query))
+    HttpResponse::Ok().json(T::find_all(db, query).await)
 }
 
-pub async fn get<T>(req: HttpRequest, db: Data<mongodb::sync::Database>) -> HttpResponse
+pub async fn get<T>(req: HttpRequest, db: Data<mongodb::Database>) -> HttpResponse
 where
     T: DeserializeOwned + Unpin + Send + Sync + Serialize + Mongo<T> + Debug,
 {
     let query = get_query(req);
-    HttpResponse::Ok().json(T::find_one(db, query))
+    HttpResponse::Ok().json(T::find_one(db, query).await)
 }
 
-pub async fn post<T>(
-    req: HttpRequest,
-    db: Data<mongodb::sync::Database>,
-    body: Json<T>,
-) -> HttpResponse
+pub async fn post<T>(req: HttpRequest, db: Data<mongodb::Database>, body: Json<T>) -> HttpResponse
 where
     T: DeserializeOwned + Unpin + Send + Sync + Serialize + Mongo<T> + Debug,
 {
-
     let mut body = bson::to_document(&body.into_inner()).unwrap();
     body.insert("ct", get_timestamp());
 
@@ -40,14 +35,10 @@ where
         body.insert(key, str_to_oid(val));
     }
 
-    HttpResponse::Ok().json(T::insert_one(db, body))
+    HttpResponse::Ok().json(T::insert_one(db, body).await)
 }
 
-pub async fn patch<T>(
-    req: HttpRequest,
-    db: Data<mongodb::sync::Database>,
-    body: Json<T>,
-) -> HttpResponse
+pub async fn patch<T>(req: HttpRequest, db: Data<mongodb::Database>, body: Json<T>) -> HttpResponse
 where
     T: DeserializeOwned + Unpin + Send + Sync + Serialize + Mongo<T> + Debug,
 {
@@ -58,13 +49,13 @@ where
 
     let update = doc! {"$set":body};
     let query = get_query(req);
-    HttpResponse::Ok().json(T::update_one(db, query, update))
+    HttpResponse::Ok().json(T::update_one(db, query, update).await)
 }
 
-pub async fn delete<T>(req: HttpRequest, db: Data<mongodb::sync::Database>) -> HttpResponse
+pub async fn delete<T>(req: HttpRequest, db: Data<mongodb::Database>) -> HttpResponse
 where
     T: DeserializeOwned + Unpin + Send + Sync + Serialize + Mongo<T> + Debug,
 {
     let query = get_query(req);
-    HttpResponse::Ok().json(T::delete_one(db, query))
+    HttpResponse::Ok().json(T::delete_one(db, query).await)
 }
